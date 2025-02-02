@@ -30,6 +30,7 @@
 #include "../countryflags.h"
 #include "../menus.h"
 #include "../skins.h"
+#include "game/client/components/tclient/trails.h"
 
 #include <array>
 #include <chrono>
@@ -214,8 +215,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			continue;
 
 		TabBar.VSplitLeft(TabWidth, &Button, &TabBar);
-		const int Corners = Tab == 0 ? IGraphics::CORNER_L : Tab == NUMBER_OF_TCLIENT_TABS - 1 ? IGraphics::CORNER_R :
-													 IGraphics::CORNER_NONE;
+		const int Corners = Tab == 0 ? IGraphics::CORNER_L : Tab == NUMBER_OF_TCLIENT_TABS - 1 ? IGraphics::CORNER_R : IGraphics::CORNER_NONE;
 		if(DoButton_MenuTab(&s_aPageTabs[Tab], apTabNames[Tab], s_CurCustomTab == Tab, &Button, Corners, nullptr, nullptr, nullptr, nullptr, 4.0f))
 			s_CurCustomTab = Tab;
 	}
@@ -727,15 +727,71 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 	{
 		DoSliderWithScaledValue(&g_Config.m_ClRunOnJoinDelay, &g_Config.m_ClRunOnJoinDelay, &Button, TCLocalize("Delay"), 140, 2000, 20, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, "ms");
 	}
-	CUIRect ButtonVerify, EnableVerifySection;
-	Column.HSplitTop(LineSize, &EnableVerifySection, &Column);
-	EnableVerifySection.VSplitMid(&EnableVerifySection, &ButtonVerify);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClAutoVerify, TCLocalize("Auto verify"), &g_Config.m_ClAutoVerify, &EnableVerifySection, LineSize);
-	static CButtonContainer s_VerifyButton;
-	if(DoButton_Menu(&s_VerifyButton, TCLocalize("Manual Verify"), 0, &ButtonVerify, 0, IGraphics::CORNER_ALL))
+	//CUIRect ButtonVerify, EnableVerifySection;
+	//Column.HSplitTop(LineSize, &EnableVerifySection, &Column);
+	//EnableVerifySection.VSplitMid(&EnableVerifySection, &ButtonVerify);
+	//DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClAutoVerify, TCLocalize("Auto verify"), &g_Config.m_ClAutoVerify, &EnableVerifySection, LineSize);
+	//static CButtonContainer s_VerifyButton;
+	//if(DoButton_Menu(&s_VerifyButton, TCLocalize("Manual Verify"), 0, &ButtonVerify, 0, IGraphics::CORNER_ALL))
+	//{
+	//	if(!Client()->ViewLink("https://ger10.ddnet.org/"))
+	//		dbg_msg("menus", "couldn't open link");
+	//}
+	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
+
+	// ***** Voting ***** //
+	Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
+	s_SectionBoxes.push_back(Column);
+	Column.HSplitTop(HeadlineHeight, &Label, &Column);
+	Ui()->DoLabel(&Label, TCLocalize("Voting"), HeadlineFontSize, TEXTALIGN_ML);
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClAutoVoteWhenFar, TCLocalize("Auto vote no to map changes when far"), &g_Config.m_ClAutoVoteWhenFar, &Column, LineSize);
+	Column.HSplitTop(LineSize, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_ClAutoVoteWhenFarTime, &g_Config.m_ClAutoVoteWhenFarTime, &Button, TCLocalize("Minimum Time"), 1, 20, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, " minutes");
+
+	CUIRect VoteMessage;
+	Column.HSplitTop(LineSize + MarginExtraSmall, &VoteMessage, &Column);
+	VoteMessage.HSplitTop(MarginExtraSmall, nullptr, &VoteMessage);
+	VoteMessage.VSplitMid(&Label, &VoteMessage);
+	static CLineInput s_VoteMessage(g_Config.m_ClAutoVoteWhenFarMessage, sizeof(g_Config.m_ClAutoVoteWhenFarMessage));
+	s_VoteMessage.SetEmptyText(TCLocalize("Leave empty to disable"));
+	Ui()->DoEditBox(&s_VoteMessage, &VoteMessage, EditBoxFontSize);
+	Ui()->DoLabel(&Label, TCLocalize("Message to send in chat:"), FontSize, TEXTALIGN_ML);
+
+	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+
+	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
+
+	// ***** Auto Reply ***** //
+	Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
+	s_SectionBoxes.push_back(Column);
+	Column.HSplitTop(HeadlineHeight, &Label, &Column);
+	Ui()->DoLabel(&Label, TCLocalize("Auto Reply"), HeadlineFontSize, TEXTALIGN_ML);
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClAutoReplyMuted, TCLocalize("Auto reply to muted players"), &g_Config.m_ClAutoReplyMuted, &Column, LineSize);
+	CUIRect MutedReply;
+	Column.HSplitTop(LineSize + MarginExtraSmall, &MutedReply, &Column);
+	if(g_Config.m_ClAutoReplyMuted)
 	{
-		if(!Client()->ViewLink("https://ger10.ddnet.org/"))
-			dbg_msg("menus", "couldn't open link");
+		MutedReply.HSplitTop(MarginExtraSmall, nullptr, &MutedReply);
+		static CLineInput s_MutedReply(g_Config.m_ClAutoReplyMutedMessage, sizeof(g_Config.m_ClAutoReplyMutedMessage));
+		s_MutedReply.SetEmptyText("I have muted you");
+		Ui()->DoEditBox(&s_MutedReply, &MutedReply, EditBoxFontSize);
+	}
+	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClAutoReplyMinimized, TCLocalize("Auto reply when tabbed out"), &g_Config.m_ClAutoReplyMinimized, &Column, LineSize);
+	CUIRect MinimizedReply;
+	Column.HSplitTop(LineSize + MarginExtraSmall, &MinimizedReply, &Column);
+	if(g_Config.m_ClAutoReplyMinimized)
+	{
+		MinimizedReply.HSplitTop(MarginExtraSmall, nullptr, &MinimizedReply);
+		static CLineInput s_MinimizedReply(g_Config.m_ClAutoReplyMinimizedMessage, sizeof(g_Config.m_ClAutoReplyMinimizedMessage));
+		s_MinimizedReply.SetEmptyText("I am not tabbed in");
+		Ui()->DoEditBox(&s_MinimizedReply, &MinimizedReply, EditBoxFontSize);
 	}
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
@@ -949,19 +1005,21 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 	Ui()->DoLabel(&Label, TCLocalize("Rainbow"), HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
-	static std::vector<const char *> s_DropDownNames = {TCLocalize("Rainbow"), TCLocalize("Pulse"), TCLocalize("Black"), TCLocalize("Random")};
-	static CUi::SDropDownState s_RainbowDropDownState;
-	static CScrollRegion s_RainbowDropDownScrollRegion;
-	s_RainbowDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_RainbowDropDownScrollRegion;
-	int RainbowSelectedOld = g_Config.m_ClRainbowMode - 1;
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRainbowTees, TCLocalize("Rainbow Tees"), &g_Config.m_ClRainbowTees, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRainbowWeapon, TCLocalize("Rainbow weapons"), &g_Config.m_ClRainbowWeapon, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRainbowHook, TCLocalize("Rainbow hook"), &g_Config.m_ClRainbowHook, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRainbowOthers, TCLocalize("Rainbow others"), &g_Config.m_ClRainbowOthers, &Column, LineSize);
+
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
-	CUIRect DropDownRect;
-	Column.HSplitTop(LineSize, &DropDownRect, &Column);
-	const int RainbowSelectedNew = Ui()->DoDropDown(&DropDownRect, RainbowSelectedOld, s_DropDownNames.data(), s_DropDownNames.size(), s_RainbowDropDownState);
+	static std::vector<const char *> s_RainbowDropDownNames;
+	s_RainbowDropDownNames = {TCLocalize("Rainbow"), TCLocalize("Pulse"), TCLocalize("Black"), TCLocalize("Random")};
+	static CUi::SDropDownState s_RainbowDropDownState;
+	static CScrollRegion s_RainbowDropDownScrollRegion;
+	s_RainbowDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_RainbowDropDownScrollRegion;
+	int RainbowSelectedOld = g_Config.m_ClRainbowMode - 1;
+	CUIRect RainbowDropDownRect;
+	Column.HSplitTop(LineSize, &RainbowDropDownRect, &Column);
+	const int RainbowSelectedNew = Ui()->DoDropDown(&RainbowDropDownRect, RainbowSelectedOld, s_RainbowDropDownNames.data(), s_RainbowDropDownNames.size(), s_RainbowDropDownState);
 	if(RainbowSelectedOld != RainbowSelectedNew)
 	{
 		g_Config.m_ClRainbowMode = RainbowSelectedNew + 1;
@@ -983,20 +1041,39 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTeeTrail, TCLocalize("Enable tee trails"), &g_Config.m_ClTeeTrail, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTeeTrailOthers, TCLocalize("Tee trail others"), &g_Config.m_ClTeeTrailOthers, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTeeTrailRainbow, TCLocalize("Rainbow tee trail"), &g_Config.m_ClTeeTrailRainbow, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTeeTrailOthers, TCLocalize("Show other tees' trails"), &g_Config.m_ClTeeTrailOthers, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTeeTrailFade, TCLocalize("Fade trail alpha"), &g_Config.m_ClTeeTrailFade, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTeeTrailTaper, TCLocalize("Taper trail width"), &g_Config.m_ClTeeTrailTaper, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTeeTrailUseTeeColor, TCLocalize("Use tee color for trail"), &g_Config.m_ClTeeTrailUseTeeColor, &Column, LineSize);
+
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+	std::vector<const char *> s_TrailDropDownNames;
+	s_TrailDropDownNames = {TCLocalize("Solid"), TCLocalize("Tee"), TCLocalize("Rainbow"), TCLocalize("Speed")};
+	static CUi::SDropDownState s_TrailDropDownState;
+	static CScrollRegion s_TrailDropDownScrollRegion;
+	s_TrailDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_TrailDropDownScrollRegion;
+	int TrailSelectedOld = g_Config.m_ClTeeTrailColorMode - 1;
+	CUIRect TrailDropDownRect;
+	Column.HSplitTop(LineSize, &TrailDropDownRect, &Column);
+	const int TrailSelectedNew = Ui()->DoDropDown(&TrailDropDownRect, TrailSelectedOld, s_TrailDropDownNames.data(), s_TrailDropDownNames.size(), s_TrailDropDownState);
+	if(TrailSelectedOld != TrailSelectedNew)
+	{
+		g_Config.m_ClTeeTrailColorMode = TrailSelectedNew + 1;
+		TrailSelectedOld = TrailSelectedNew;
+	}
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	static CButtonContainer s_TeeTrailColor;
+	if(g_Config.m_ClTeeTrailColorMode == CTrails::COLORMODE_SOLID)
+		DoLine_ColorPicker(&s_TeeTrailColor, ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &Column, TCLocalize("Tee trail color"), &g_Config.m_ClTeeTrailColor, ColorRGBA(1.0f, 1.0f, 1.0f), false);
+	else
+		Column.HSplitTop(ColorPickerLineSize + ColorPickerLineSpacing, &Button, &Column);
+
 	Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_ClTeeTrailWidth, &g_Config.m_ClTeeTrailWidth, &Button, TCLocalize("Trail width"), 0, 20);
 	Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_ClTeeTrailLength, &g_Config.m_ClTeeTrailLength, &Button, TCLocalize("Trail length"), 0, 200);
 	Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_ClTeeTrailAlpha, &g_Config.m_ClTeeTrailAlpha, &Button, TCLocalize("Trail alpha"), 0, 100);
-	static CButtonContainer s_TeeTrailColor;
-	DoLine_ColorPicker(&s_TeeTrailColor, ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &Column, TCLocalize("Tee trail color"), &g_Config.m_ClTeeTrailColor, ColorRGBA(1.0f, 1.0f, 1.0f), false);
 
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 	Column.HSplitTop(MarginSmall, nullptr, &Column);

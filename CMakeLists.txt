@@ -7,7 +7,7 @@ endif()
 
 file(STRINGS src/game/version.h VERSION_LINE
   LIMIT_COUNT 1
-  REGEX "^#define GAME_RELEASE_VERSION "
+  REGEX "^#define TCLIENT_VERSION "
 )
 
 if(VERSION_LINE MATCHES "\"([0-9]+)\\.([0-9]+)\\.([0-9]+)\"")
@@ -23,9 +23,9 @@ else()
 endif()
 
 if(VERSION_PATCH STREQUAL "0")
-  project(DDNet VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
+  project(TClient VERSION ${VERSION_MAJOR}.${VERSION_MINOR})
 else()
-  project(DDNet VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+  project(TClient VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 endif()
 
 set(ORIGINAL_CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
@@ -1842,13 +1842,52 @@ set(EXPECTED_DATA
   tclient/fonts/Cabin-Regular.ttf
   tclient/fonts/FreeSansBold.ttf
   tclient/fonts/GoogleSans-Regular.ttf
-  tclient/fonts/FreeSansBold.ttf
   tclient/fonts/Inter_24pt-Regular.ttf
   tclient/fonts/Inter_24pt-SemiBold.ttf
   tclient/fonts/Montserrat-Regular.ttf
   tclient/fonts/Nunito-Black.ttf
   tclient/fonts/Rubik-Regular.ttf
   tclient/fonts/minecraft_font.ttf
+  tclient/languages/arabic.txt
+  tclient/languages/azerbaijani.txt
+  tclient/languages/belarusian.txt
+  tclient/languages/bosnian.txt
+  tclient/languages/brazilian_portuguese.txt
+  tclient/languages/bulgarian.txt
+  tclient/languages/catalan.txt
+  tclient/languages/chuvash.txt
+  tclient/languages/czech.txt
+  tclient/languages/danish.txt
+  tclient/languages/dutch.txt
+  tclient/languages/esperanto.txt
+  tclient/languages/estonian.txt
+  tclient/languages/finnish.txt
+  tclient/languages/french.txt
+  tclient/languages/galician.txt
+  tclient/languages/german.txt
+  tclient/languages/greek.txt
+  tclient/languages/hungarian.txt
+  tclient/languages/index.txt
+  tclient/languages/italian.txt
+  tclient/languages/japanese.txt
+  tclient/languages/korean.txt
+  tclient/languages/kyrgyz.txt
+  tclient/languages/license.txt
+  tclient/languages/norwegian.txt
+  tclient/languages/persian.txt
+  tclient/languages/polish.txt
+  tclient/languages/portuguese.txt
+  tclient/languages/romanian.txt
+  tclient/languages/russian.txt
+  tclient/languages/serbian.txt
+  tclient/languages/serbian_cyrillic.txt
+  tclient/languages/simplified_chinese.txt
+  tclient/languages/slovak.txt
+  tclient/languages/spanish.txt
+  tclient/languages/swedish.txt
+  tclient/languages/traditional_chinese.txt
+  tclient/languages/turkish.txt
+  tclient/languages/ukrainian.txt
   themes/auto.png
   themes/autumn.png
   themes/autumn_day.map
@@ -3656,9 +3695,9 @@ foreach(target ${TARGETS_OWN})
       target_compile_definitions(${target} PRIVATE CONF_DISCORD_DYNAMIC)
     endif()
   endif()
-  if(VERSION)
-    target_compile_definitions(${target} PRIVATE GAME_RELEASE_VERSION="${VERSION}")
-  endif()
+  # if(VERSION)
+  #   target_compile_definitions(${target} PRIVATE GAME_RELEASE_VERSION="${VERSION}")
+  # endif()
   if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
    target_compile_definitions(${target} PRIVATE CONF_WEBASM)
   endif()

@@ -1,5 +1,5 @@
-#ifndef GAME_CLIENT_COMPONENTS_RAINBOW_H
-#define GAME_CLIENT_COMPONENTS_RAINBOW_H
+#ifndef GAME_CLIENT_COMPONENTS_TCLIENT_RAINBOW_H
+#define GAME_CLIENT_COMPONENTS_TCLIENT_RAINBOW_H
 #include <game/client/component.h>
 
 class CRainbow : public CComponent
@@ -8,7 +8,7 @@ public:
 	virtual int Sizeof() const override { return sizeof(*this); }
 	virtual void OnRender() override;
 
-	enum COLORMODE
+	enum COLORMODES
 	{
 		COLORMODE_RAINBOW = 1,
 		COLORMODE_PULSE,
